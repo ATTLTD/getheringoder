@@ -60,7 +60,7 @@ nav.cats a.on{border-color:var(--paddy);color:var(--paddy);font-weight:700}
 section.cat{margin-bottom:36px}
 section.cat h2{font-family:var(--serif);font-weight:900;font-size:24px;margin:0 0 4px;display:flex;align-items:baseline;gap:10px}
 section.cat h2 small{font-family:var(--sans);font-weight:400;font-size:14px;color:var(--muted)}
-.catnote{white-space:pre-line;margin:0 0 12px;padding:10px 14px;background:var(--sesame-soft);border-left:4px solid var(--sesame);font-size:14.5px}
+.catnote{margin:0 0 12px;padding:10px 14px;background:var(--sesame-soft);border-left:4px solid var(--sesame);font-size:14.5px}
 
 /* 套餐：以大號字母為視覺重心 */
 .sets{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
@@ -149,6 +149,12 @@ aside.cart h2{font-family:var(--serif);font-size:20px;margin:0 0 10px}
 .sumtbl tfoot td{font-weight:700}
 .kh{font-family:var(--serif);font-size:20px;margin:8px 0 10px}
 .tblwrap{overflow-x:auto}
+.who{margin:16px 0 0;padding:16px;background:var(--surface);border:1px solid var(--rule);border-left:6px solid var(--paddy);border-radius:4px}
+.who label{display:block;font-family:var(--serif);font-weight:900;font-size:20px;margin-bottom:8px}
+.who .row{display:flex;gap:8px;max-width:480px}
+.who input{flex:1;min-width:0;font:inherit;font-size:17px;padding:10px 12px;border:1px solid var(--rule);border-radius:3px;background:var(--bg);color:var(--ink)}
+.who .chip{padding:8px 16px;font-size:15px}
+.who .hint{margin:8px 0 0}
 .notice{padding:14px;background:var(--surface);border:1px solid var(--rule);border-radius:4px;color:var(--muted)}
 [hidden]{display:none!important}
 @media (prefers-reduced-motion:no-preference){.stepper button.add:active{transform:scale(.92)}}
@@ -171,6 +177,13 @@ aside.cart h2{font-family:var(--serif);font-size:20px;margin:0 0 10px}
   </header>
 </div>
 <div id="view-order">
+  <div class="wrap">
+    <section class="who" aria-label="點餐人">
+      <label for="who">點餐人 <span class="err">*</span></label>
+      <div class="row"><input id="who" maxlength="20" autocomplete="off" placeholder="請先輸入你的姓名"><button type="button" class="chip" id="loadbtn">載入我的點餐</button></div>
+      <p class="hint" id="whomsg">第一次點餐請直接輸入姓名；已經點過的話，輸入姓名後按「載入我的點餐」即可修改。</p>
+    </section>
+  </div>
   <nav class="cats" aria-label="菜單分類"><div class="wrap"><ul id="catnav"></ul></div></nav>
   <div class="wrap layout">
     <main id="menu"></main>
@@ -188,14 +201,14 @@ aside.cart h2{font-family:var(--serif);font-size:20px;margin:0 0 10px}
 <script>
 /* ===== 設定：部署 Apps Script 後，把網址貼在這裡 ===== */
 const CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbz8wmAOmeQIKFcjvvzZy-9l_ccsR-LUtAID4RQjDBL5wNdXjqMx_-UUrsou9E1QKHWA/exec",
-  DEADLINE: "2026-11-02T17:00:00+08:00"
+  API_URL: "https://script.google.com/macros/s/AKfycbz8wmAOmeQIKFcjvvzZy-9l_ccsR-LUtAID4RQjDBL5wNdXjqMx_-UUrsou9E1QKHWA/exec",   // 例："https://script.google.com/macros/s/XXXXXXXX/exec"
+  DEADLINE: "2026-11-02T17:00:00+08:00"   // 選填，截止後不能再修改。例："2026-11-05T10:00:00+08:00"
 };
 
 /* ===== 菜單資料（依表單內容） ===== */
 const TEMP = {key:"溫度", vals:["冰","熱"]};
 const MENU = [
-    {id:"main", name:"主菜", sub:"可選擇搭配套餐", note:"每道主菜可選擇是否搭配套餐，套餐價格另計：\nA 農家菜飯 +$183：台梗9號（可續乙碗）、現炒時蔬、湯品、甜品\nB 台式 煙雨二月梅 +$238：台梗9號（可續乙碗）、巨骨煲湯、現炒時蔬、涼碟、甜品、水果杯\nC 日式 赤焰日不落 +$238：經典三顆小糰飯、日式野菜煮、玉子燒、冷碟、甜品、水果杯\nD 西式 金色曼哈頓 +$264：酸辣天使麵、蘭護手工麵包、起司蛋捲、生菜沙拉、甜品、水果杯\n搭配套餐並加購飲品，每份套餐可折抵 $30。", items:[
+  {id:"main", name:"主菜", sub:"", items:[
     {id:"m1", name:"藥膳麻油松阪豬", price:288},
     {id:"m2", name:"藥膳麻油雞腿", price:266},
     {id:"m3", name:"藥膳麻油鱸魚", price:268},
@@ -210,7 +223,12 @@ const MENU = [
     {id:"m12", name:"香煎挪威鯖魚", price:222},
     {id:"m13", name:"西班牙蒜辣蝦", price:288}
   ]},
-  
+  {id:"set", name:"套餐組合", sub:"主菜", note:"需搭配主菜：每點一道主菜，可加點一份套餐組合。\n豐盛組合加購飲品，每份套餐可折抵 $30。", items:[
+    {id:"A", name:"農家菜飯", price:183, set:true, incl:"台梗9號（可續乙碗）、現炒時蔬、湯品、甜品"},
+    {id:"B", name:"台式 煙雨二月梅", price:238, set:true, incl:"台梗9號（可續乙碗）、巨骨煲湯、現炒時蔬、涼碟、甜品、水果杯"},
+    {id:"C", name:"日式 赤焰日不落", price:238, set:true, incl:"經典三顆小糰飯、日式野菜煮、玉子燒、冷碟、甜品、水果杯"},
+    {id:"D", name:"西式 金色曼哈頓", price:264, set:true, incl:"酸辣天使麵、蘭護手工麵包、起司蛋捲、生菜沙拉、甜品、水果杯"}
+  ]},
   {id:"ala", name:"單點", sub:"", items:[
     {id:"s1", name:"藥膳麻油炸雙蛋湯", price:118, veg:true},
     {id:"s2", name:"麻油炸2顆蛋（乾）", price:52, veg:true},
@@ -271,9 +289,8 @@ const MENU = [
 const PEARL = {name:"黑糖珍珠", price:25};
 const SET_DRINK_DISCOUNT = 30; // 每份套餐可折抵一杯飲品
 const ITEM = {}; MENU.forEach(c=>c.items.forEach(i=>ITEM[i.id]=i));
-const SET_PRICE = {"A 農家菜飯":183, "B 台式 煙雨二月梅":238, "C 日式 赤焰日不落":238, "D 西式 金色曼哈頓":264};
-const SET_OPT = {key:"套餐", vals:["不要套餐", ...Object.keys(SET_PRICE)]};
-MENU.find(c=>c.id==="main").items.forEach(it=>it.opts=[SET_OPT]);
+const MAIN_IDS = new Set(MENU.find(c=>c.id==="main").items.map(i=>i.id));
+function canAddSet(){const c=calc(); return c.sets<c.mains}
 
 
 
@@ -296,14 +313,14 @@ const closed = ()=>CONFIG.DEADLINE && Date.now()>new Date(CONFIG.DEADLINE).getTi
 function defaultOpts(it){const o={}; (it.opts||[]).forEach(g=>o[g.key]=g.vals[0]); if(it.tea) o._pearl=false; return o}
 MENU.forEach(c=>c.items.forEach(it=>sel[it.id]=defaultOpts(it)));
 function lineKey(id,o){return id+"|"+JSON.stringify(o)}
-function unitPrice(l){const it=ITEM[l.id]; if(it.price==null) return null; return it.price+(l.opts._pearl?PEARL.price:0)+(SET_PRICE[l.opts["套餐"]]||0)}
+function unitPrice(l){const it=ITEM[l.id]; if(it.price==null) return null; return it.price+(l.opts._pearl?PEARL.price:0)}
 function optText(o){const p=Object.entries(o).filter(([k])=>k!=="_pearl").map(([,v])=>v); if(o._pearl) p.push("加"+PEARL.name); return p.join("、")}
 function qtyOf(id){let n=0; cart.forEach(l=>{if(l.id===id) n+=l.qty}); return n}
 function calc(){
-  let sub=0,count=0,sets=0,drinks=0,unpriced=false;
-  cart.forEach(l=>{const it=ITEM[l.id],p=unitPrice(l); count+=l.qty; if(p==null) unpriced=true; else sub+=p*l.qty; if(SET_PRICE[l.opts["套餐"]]) sets+=l.qty; if(it.drink&&it.price!=null) drinks+=l.qty});
+  let sub=0,count=0,sets=0,drinks=0,mains=0,unpriced=false;
+  cart.forEach(l=>{const it=ITEM[l.id],p=unitPrice(l); count+=l.qty; if(p==null) unpriced=true; else sub+=p*l.qty; if(it.set) sets+=l.qty; if(MAIN_IDS.has(l.id)) mains+=l.qty; if(it.drink&&it.price!=null) drinks+=l.qty});
   const discount=Math.min(sets,drinks)*SET_DRINK_DISCOUNT;
-  return {sub,count,sets,drinks,discount,total:sub-discount,unpriced};
+  return {sub,count,sets,drinks,mains,discount,total:sub-discount,unpriced};
 }
 
 /* ===== 與 Google 試算表連線 ===== */
@@ -319,13 +336,13 @@ async function api(params, body){
 
 /* ===== 菜單 ===== */
 function priceHTML(it){return it.price==null?'<span class="price ask">價格請洽櫃檯</span>':`<span class="price">${money(it.price)}</span>`}
-function stepperHTML(id){const q=qtyOf(id); return `<div class="stepper"><button type="button" data-dec="${id}" aria-label="減少 ${esc(ITEM[id].name)}" ${q?"":"disabled"}>−</button><span class="q" aria-live="polite">${q||""}</span><button type="button" class="add" data-add="${id}" aria-label="加入 ${esc(ITEM[id].name)}">+</button></div>`}
+function stepperHTML(id){const q=qtyOf(id); return `<div class="stepper"><button type="button" data-dec="${id}" aria-label="減少 ${esc(ITEM[id].name)}" ${q?"":"disabled"}>−</button><span class="q" aria-live="polite">${q||""}</span><button type="button" class="add" data-add="${id}" aria-label="加入 ${esc(ITEM[id].name)}" ${ITEM[id].set&&!canAddSet()?"disabled":""}>+</button></div>`}
 function optsHTML(it){
   if(!it.opts&&!it.tea) return "";
   let h='<div class="opts">';
   (it.opts||[]).forEach(g=>{
     if(g.vals.length<2){h+=`<span class="optgroup"><span class="chip" aria-pressed="true">${esc(g.vals[0])}</span></span>`;return}
-    h+=`<span class="optgroup" role="group" aria-label="${esc(g.key)}">`+g.vals.map(v=>`<button type="button" class="chip" data-opt="${it.id}" data-k="${esc(g.key)}" data-v="${esc(v)}" aria-pressed="${sel[it.id][g.key]===v}">${esc(v)}${SET_PRICE[v]?` +$${SET_PRICE[v]}`:""}</button>`).join("")+"</span>";
+    h+=`<span class="optgroup" role="group" aria-label="${esc(g.key)}">`+g.vals.map(v=>`<button type="button" class="chip" data-opt="${it.id}" data-k="${esc(g.key)}" data-v="${esc(v)}" aria-pressed="${sel[it.id][g.key]===v}">${esc(v)}</button>`).join("")+"</span>";
   });
   if(it.tea) h+=`<button type="button" class="chip" data-pearl="${it.id}" aria-pressed="${sel[it.id]._pearl}">加${PEARL.name} +${PEARL.price}</button>`;
   return h+"</div>";
@@ -361,7 +378,7 @@ function renderCart(){
   if(doneInfo){
     el.innerHTML=`<div class="done"><p class="hint">${doneInfo.updated?"已更新，謝謝！":"已送出，謝謝！"}</p><div class="no">${esc(doneInfo.name)}</div>
       <p class="totals"><span class="grand">${money(doneInfo.total)}</span>${doneInfo.unpriced?'<br><span class="hint">另有洽櫃檯計價品項</span>':""}</p>
-      <p class="hint">之後用同一支手機打開這個網頁，會自動帶出你的點餐；換手機時輸入姓名後按「載入」即可修改。</p>
+      <p class="hint">之後用同一支手機打開這個網頁，會自動帶出你的點餐；換手機時在最上方輸入姓名後按「載入我的點餐」即可修改。</p>
       <button class="btn" type="button" id="editmine">修改我的點餐</button>
       <p></p><button class="btn ghost" type="button" id="neworder">幫其他人點餐</button></div>`;
     return;
@@ -374,16 +391,16 @@ function renderCart(){
     h+='<ul class="lines">';
     cart.forEach((l,k)=>{
       const it=ITEM[l.id],p=unitPrice(l),ot=optText(l.opts);
-      h+=`<li><span>${it.set?it.id+" ":""}${esc(it.name)}</span><span class="lsum">${p==null?"洽櫃檯":money(p*l.qty)}</span>${ot?`<span class="lopt">${esc(ot)}</span>`:"<span></span>"}<div class="stepper"><button type="button" data-ldec="${esc(k)}" aria-label="減少">−</button><span class="q">${l.qty}</span><button type="button" class="add" data-linc="${esc(k)}" aria-label="增加">+</button></div></li>`;
+      h+=`<li><span>${it.set?it.id+" ":""}${esc(it.name)}</span><span class="lsum">${p==null?"洽櫃檯":money(p*l.qty)}</span>${ot?`<span class="lopt">${esc(ot)}</span>`:"<span></span>"}<div class="stepper"><button type="button" data-ldec="${esc(k)}" aria-label="減少">−</button><span class="q">${l.qty}</span><button type="button" class="add" data-linc="${esc(k)}" aria-label="增加" ${it.set&&!canAddSet()?"disabled":""}>+</button></div></li>`;
     });
     h+='</ul><div class="totals">'+`<div><span>小計</span><span>${money(c.sub)}</span></div>`;
     if(c.discount) h+=`<div class="disc"><span>套餐加購飲品折抵（${c.discount/SET_DRINK_DISCOUNT} 杯）</span><span>−${money(c.discount)}</span></div>`;
     h+=`<div class="grand"><span>合計</span><span>${money(c.total)}</span></div></div>`;
     if(c.sets>c.drinks) h+=`<p class="hint">再加購 ${c.sets-c.drinks} 杯飲品，每杯可折抵 $${SET_DRINK_DISCOUNT}。</p>`;
     if(c.unpriced) h+='<p class="hint">部分品項價格請洽櫃檯，未計入合計。</p>';
+    if(c.sets>c.mains) h+=`<p class="err">套餐組合有 ${c.sets} 份，但主菜只有 ${c.mains} 道。請加點主菜或減少套餐。</p>`;
   }
-  h+=`<div class="field"><label for="who">點餐人 <span class="err">*</span></label><div class="seg"><input id="who" style="flex:1" maxlength="20" autocomplete="off" placeholder="請輸入姓名" value="${esc(formName)}"><button type="button" class="chip" id="loadbtn">載入</button></div></div>`;
-  if(msg) h+=`<p class="hint" aria-live="polite">${esc(msg)}</p>`;
+  h+=`<p class="hint">點餐人：${formName.trim()?esc(formName.trim()):'<span class="err">尚未填寫（請在頁面最上方輸入）</span>'}</p>`;
   h+=`<label class="field"><span>備註（選填）</span><textarea id="note" rows="2" maxlength="200" placeholder="例如：不要香菜、飯少一點">${esc(formNote)}</textarea></label>`;
   h+=`<p class="err" id="err" hidden></p><button class="btn" type="button" id="submit" ${busy||closed()?"disabled":""}>${busy?"處理中…":isUpdate?"更新點餐":"送出點餐"}</button>`;
   if(isUpdate) h+=`<p></p><button class="btn ghost" type="button" id="cancelmine" ${busy||closed()?"disabled":""}>取消我的點餐</button>`;
@@ -394,12 +411,19 @@ function renderBar(){
   $("#barcount").textContent=doneInfo?`已送出（${doneInfo.name}）`:(c.count?`查看點餐（${c.count} 項）`:(loaded?`修改 ${loaded} 的點餐`:"尚未點餐"));
   $("#bartotal").textContent=money(doneInfo?doneInfo.total:c.total);
 }
-function update(){refreshSteppers(); renderCart(); renderBar()}
+const WHO_HINT="第一次點餐請直接輸入姓名；已經點過的話，輸入姓名後按「載入我的點餐」即可修改。";
+function renderWho(){
+  const i=$("#who"); if(i.value!==formName) i.value=formName;
+  $("#whomsg").textContent=msg||WHO_HINT;
+  $("#loadbtn").disabled=busy;
+}
+function focusWho(){toggleSheet(false); const i=$("#who"); i.scrollIntoView({block:"center"}); i.focus()}
+function update(){refreshSteppers(); renderCart(); renderBar(); renderWho()}
 function showErr(t){const e=$("#err"); if(e){e.textContent=t; e.hidden=false}}
 
 /* ===== 載入／送出／取消 ===== */
 async function loadByName(name, silent){
-  name=name.trim(); if(!name){showErr("請先輸入姓名。"); return}
+  name=name.trim(); if(!name){msg="請先輸入姓名，再按「載入我的點餐」。"; renderWho(); focusWho(); return}
   busy=true; update();
   try{
     const j=await api({action:"get",name});
@@ -420,7 +444,8 @@ async function loadByName(name, silent){
 async function submitOrder(overwrite){
   const name=formName.trim(), c=calc();
   if(closed()){showErr("點餐已截止。");return}
-  if(!name){showErr("請填寫點餐人後再送出。"); $("#who").focus(); return}
+  if(!name){showErr("請先在頁面最上方填寫點餐人。"); msg="請先填寫點餐人，再送出點餐。"; renderWho(); focusWho(); return}
+  if(c.sets>c.mains){showErr("套餐組合需搭配主菜，數量不能超過主菜。");return}
   if(!c.count){showErr(loaded===name?"請至少選一項餐點；不參加的話請按「取消我的點餐」。":"請至少選一項餐點。");return}
   const wasUpdate = loaded===name;
   const body={action:"save",name,overwrite:overwrite||wasUpdate,
@@ -500,7 +525,7 @@ window.addEventListener("hashchange",()=>{if(["#order","#summary",""].includes(l
 
 /* ===== 事件 ===== */
 document.addEventListener("input",e=>{
-  if(e.target.id==="who"){formName=e.target.value; const was=$("#submit")?.textContent; const isUpd=loaded&&formName.trim()===loaded; if($("#submit")&&!busy) $("#submit").textContent=isUpd?"更新點餐":"送出點餐"}
+  if(e.target.id==="who"){formName=e.target.value; if(!doneInfo){renderCart(); renderBar()}}
   if(e.target.id==="note") formNote=e.target.value;
 });
 document.addEventListener("keydown",e=>{
@@ -519,7 +544,7 @@ document.addEventListener("click",e=>{
   else if(t.id==="loadbtn") loadByName(formName);
   else if(t.id==="cancelmine") cancelMine();
   else if(t.id==="editmine"){doneInfo=null; msg=""; update()}
-  else if(t.id==="neworder"){doneInfo=null; cart.clear(); formName=""; formNote=""; loaded=null; msg=""; update()}
+  else if(t.id==="neworder"){doneInfo=null; cart.clear(); formName=""; formNote=""; loaded=null; msg=""; update(); focusWho()}
   else if(t.id==="bar") toggleSheet(true);
   else if(t.id==="krefresh") fetchSummary();
   else if(ds.cat){e.preventDefault(); document.getElementById("cat-"+ds.cat).scrollIntoView({behavior:matchMedia("(prefers-reduced-motion: reduce)").matches?"auto":"smooth"})}
