@@ -188,19 +188,13 @@ aside.cart h2{font-family:var(--serif);font-size:20px;margin:0 0 10px}
 <script>
 /* ===== 設定：部署 Apps Script 後，把網址貼在這裡 ===== */
 const CONFIG = {
-  API_URL: "https://script.google.com/macros/s/AKfycbz8wmAOmeQIKFcjvvzZy-9l_ccsR-LUtAID4RQjDBL5wNdXjqMx_-UUrsou9E1QKHWA/exec",   // 例："https://script.google.com/macros/s/XXXXXXXX/exec"
-  DEADLINE: "2026-11-02T17:00:00+08:00"   // 選填，截止後不能再修改。例："2026-11-05T10:00:00+08:00"
+  API_URL: "https://script.google.com/macros/s/AKfycbz8wmAOmeQIKFcjvvzZy-9l_ccsR-LUtAID4RQjDBL5wNdXjqMx_-UUrsou9E1QKHWA/exec",
+  DEADLINE: "2026-11-02T17:00:00+08:00"
 };
 
 /* ===== 菜單資料（依表單內容） ===== */
 const TEMP = {key:"溫度", vals:["冰","熱"]};
 const MENU = [
-  {id:"set", name:"套餐組合", sub:"主菜", note:"豐盛組合加購飲品，每份套餐可折抵 $30。", items:[
-    {id:"A", name:"農家菜飯", price:183, set:true, incl:"台梗9號（可續乙碗）、現炒時蔬、湯品、甜品"},
-    {id:"B", name:"台式 煙雨二月梅", price:238, set:true, incl:"台梗9號（可續乙碗）、巨骨煲湯、現炒時蔬、涼碟、甜品、水果杯"},
-    {id:"C", name:"日式 赤焰日不落", price:238, set:true, incl:"經典三顆小糰飯、日式野菜煮、玉子燒、冷碟、甜品、水果杯"},
-    {id:"D", name:"西式 金色曼哈頓", price:264, set:true, incl:"酸辣天使麵、蘭護手工麵包、起司蛋捲、生菜沙拉、甜品、水果杯"}
-  ]},
   {id:"main", name:"主菜", sub:"", items:[
     {id:"m1", name:"藥膳麻油松阪豬", price:288},
     {id:"m2", name:"藥膳麻油雞腿", price:266},
@@ -215,6 +209,12 @@ const MENU = [
     {id:"m11", name:"蒜香奶油松鼠魚", price:288},
     {id:"m12", name:"香煎挪威鯖魚", price:222},
     {id:"m13", name:"西班牙蒜辣蝦", price:288}
+  ]},
+  {id:"set", name:"套餐組合", sub:"主菜", note:"豐盛組合加購飲品，每份套餐可折抵 $30。", items:[
+    {id:"A", name:"農家菜飯", price:183, set:true, incl:"台梗9號（可續乙碗）、現炒時蔬、湯品、甜品"},
+    {id:"B", name:"台式 煙雨二月梅", price:238, set:true, incl:"台梗9號（可續乙碗）、巨骨煲湯、現炒時蔬、涼碟、甜品、水果杯"},
+    {id:"C", name:"日式 赤焰日不落", price:238, set:true, incl:"經典三顆小糰飯、日式野菜煮、玉子燒、冷碟、甜品、水果杯"},
+    {id:"D", name:"西式 金色曼哈頓", price:264, set:true, incl:"酸辣天使麵、蘭護手工麵包、起司蛋捲、生菜沙拉、甜品、水果杯"}
   ]},
   {id:"ala", name:"單點", sub:"", items:[
     {id:"s1", name:"藥膳麻油炸雙蛋湯", price:118, veg:true},
