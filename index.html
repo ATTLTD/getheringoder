@@ -60,7 +60,7 @@ nav.cats a.on{border-color:var(--paddy);color:var(--paddy);font-weight:700}
 section.cat{margin-bottom:36px}
 section.cat h2{font-family:var(--serif);font-weight:900;font-size:24px;margin:0 0 4px;display:flex;align-items:baseline;gap:10px}
 section.cat h2 small{font-family:var(--sans);font-weight:400;font-size:14px;color:var(--muted)}
-.catnote{margin:0 0 12px;padding:10px 14px;background:var(--sesame-soft);border-left:4px solid var(--sesame);font-size:14.5px}
+.catnote{white-space:pre-line;margin:0 0 12px;padding:10px 14px;background:var(--sesame-soft);border-left:4px solid var(--sesame);font-size:14.5px}
 
 /* 套餐：以大號字母為視覺重心 */
 .sets{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px}
@@ -195,7 +195,7 @@ const CONFIG = {
 /* ===== 菜單資料（依表單內容） ===== */
 const TEMP = {key:"溫度", vals:["冰","熱"]};
 const MENU = [
-  {id:"main", name:"主菜", sub:"", items:[
+    {id:"main", name:"主菜", sub:"可選擇搭配套餐", note:"每道主菜可選擇是否搭配套餐，套餐價格另計：\nA 農家菜飯 +$183：台梗9號（可續乙碗）、現炒時蔬、湯品、甜品\nB 台式 煙雨二月梅 +$238：台梗9號（可續乙碗）、巨骨煲湯、現炒時蔬、涼碟、甜品、水果杯\nC 日式 赤焰日不落 +$238：經典三顆小糰飯、日式野菜煮、玉子燒、冷碟、甜品、水果杯\nD 西式 金色曼哈頓 +$264：酸辣天使麵、蘭護手工麵包、起司蛋捲、生菜沙拉、甜品、水果杯\n搭配套餐並加購飲品，每份套餐可折抵 $30。", items:[
     {id:"m1", name:"藥膳麻油松阪豬", price:288},
     {id:"m2", name:"藥膳麻油雞腿", price:266},
     {id:"m3", name:"藥膳麻油鱸魚", price:268},
@@ -210,12 +210,7 @@ const MENU = [
     {id:"m12", name:"香煎挪威鯖魚", price:222},
     {id:"m13", name:"西班牙蒜辣蝦", price:288}
   ]},
-  {id:"set", name:"套餐組合", sub:"主菜", note:"豐盛組合加購飲品，每份套餐可折抵 $30。", items:[
-    {id:"A", name:"農家菜飯", price:183, set:true, incl:"台梗9號（可續乙碗）、現炒時蔬、湯品、甜品"},
-    {id:"B", name:"台式 煙雨二月梅", price:238, set:true, incl:"台梗9號（可續乙碗）、巨骨煲湯、現炒時蔬、涼碟、甜品、水果杯"},
-    {id:"C", name:"日式 赤焰日不落", price:238, set:true, incl:"經典三顆小糰飯、日式野菜煮、玉子燒、冷碟、甜品、水果杯"},
-    {id:"D", name:"西式 金色曼哈頓", price:264, set:true, incl:"酸辣天使麵、蘭護手工麵包、起司蛋捲、生菜沙拉、甜品、水果杯"}
-  ]},
+  
   {id:"ala", name:"單點", sub:"", items:[
     {id:"s1", name:"藥膳麻油炸雙蛋湯", price:118, veg:true},
     {id:"s2", name:"麻油炸2顆蛋（乾）", price:52, veg:true},
@@ -276,6 +271,9 @@ const MENU = [
 const PEARL = {name:"黑糖珍珠", price:25};
 const SET_DRINK_DISCOUNT = 30; // 每份套餐可折抵一杯飲品
 const ITEM = {}; MENU.forEach(c=>c.items.forEach(i=>ITEM[i.id]=i));
+const SET_PRICE = {"A 農家菜飯":183, "B 台式 煙雨二月梅":238, "C 日式 赤焰日不落":238, "D 西式 金色曼哈頓":264};
+const SET_OPT = {key:"套餐", vals:["不要套餐", ...Object.keys(SET_PRICE)]};
+MENU.find(c=>c.id==="main").items.forEach(it=>it.opts=[SET_OPT]);
 
 
 
@@ -298,12 +296,12 @@ const closed = ()=>CONFIG.DEADLINE && Date.now()>new Date(CONFIG.DEADLINE).getTi
 function defaultOpts(it){const o={}; (it.opts||[]).forEach(g=>o[g.key]=g.vals[0]); if(it.tea) o._pearl=false; return o}
 MENU.forEach(c=>c.items.forEach(it=>sel[it.id]=defaultOpts(it)));
 function lineKey(id,o){return id+"|"+JSON.stringify(o)}
-function unitPrice(l){const it=ITEM[l.id]; if(it.price==null) return null; return it.price+(l.opts._pearl?PEARL.price:0)}
+function unitPrice(l){const it=ITEM[l.id]; if(it.price==null) return null; return it.price+(l.opts._pearl?PEARL.price:0)+(SET_PRICE[l.opts["套餐"]]||0)}
 function optText(o){const p=Object.entries(o).filter(([k])=>k!=="_pearl").map(([,v])=>v); if(o._pearl) p.push("加"+PEARL.name); return p.join("、")}
 function qtyOf(id){let n=0; cart.forEach(l=>{if(l.id===id) n+=l.qty}); return n}
 function calc(){
   let sub=0,count=0,sets=0,drinks=0,unpriced=false;
-  cart.forEach(l=>{const it=ITEM[l.id],p=unitPrice(l); count+=l.qty; if(p==null) unpriced=true; else sub+=p*l.qty; if(it.set) sets+=l.qty; if(it.drink&&it.price!=null) drinks+=l.qty});
+  cart.forEach(l=>{const it=ITEM[l.id],p=unitPrice(l); count+=l.qty; if(p==null) unpriced=true; else sub+=p*l.qty; if(SET_PRICE[l.opts["套餐"]]) sets+=l.qty; if(it.drink&&it.price!=null) drinks+=l.qty});
   const discount=Math.min(sets,drinks)*SET_DRINK_DISCOUNT;
   return {sub,count,sets,drinks,discount,total:sub-discount,unpriced};
 }
@@ -327,7 +325,7 @@ function optsHTML(it){
   let h='<div class="opts">';
   (it.opts||[]).forEach(g=>{
     if(g.vals.length<2){h+=`<span class="optgroup"><span class="chip" aria-pressed="true">${esc(g.vals[0])}</span></span>`;return}
-    h+=`<span class="optgroup" role="group" aria-label="${esc(g.key)}">`+g.vals.map(v=>`<button type="button" class="chip" data-opt="${it.id}" data-k="${esc(g.key)}" data-v="${esc(v)}" aria-pressed="${sel[it.id][g.key]===v}">${esc(v)}</button>`).join("")+"</span>";
+    h+=`<span class="optgroup" role="group" aria-label="${esc(g.key)}">`+g.vals.map(v=>`<button type="button" class="chip" data-opt="${it.id}" data-k="${esc(g.key)}" data-v="${esc(v)}" aria-pressed="${sel[it.id][g.key]===v}">${esc(v)}${SET_PRICE[v]?` +$${SET_PRICE[v]}`:""}</button>`).join("")+"</span>";
   });
   if(it.tea) h+=`<button type="button" class="chip" data-pearl="${it.id}" aria-pressed="${sel[it.id]._pearl}">加${PEARL.name} +${PEARL.price}</button>`;
   return h+"</div>";
